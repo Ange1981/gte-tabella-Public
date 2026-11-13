@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GTE SA - Tabella di Marcia</title>
+<style>
+*{box-sizing:border-box;font-family:Inter,system-ui,Arial,sans-serif}
+body{margin:0;background:#f1f4f8;color:#111}
+header{background:#0b1e3a;color:#fff;padding:14px 16px;position:sticky;top:0;z-index:10}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;max-width:1300px;margin:auto}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-badge{width:58px;height:58px;background:#ffcc00;color:#0b1e3a;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;line-height:1}
+.logo-badge span{font-size:10px;letter-spacing:1px}
+.logo h1{margin:0;font-size:22px;line-height:1}
+.logo p{margin:2px 0 0;font-size:12px;opacity:.85}
+.addr{font-size:12px;text-align:right;line-height:1.4}
+.controls{max-width:1300px;margin:14px auto;padding:0 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,input,select{border:1px solid #d0d7e3;border-radius:10px;padding:10px 12px;font-size:14px;background:#fff}
+button{background:#0b1e3a;color:#fff;border:none;cursor:pointer;font-weight:700}
+button.yellow{background:#ffcc00;color:#111}
+button.ghost{background:#fff;color:#111;border:1px solid #d0d7e3}
+.week-nav{display:flex;gap:8px;align-items:center;background:#fff;padding:8px;border-radius:12px}
+.week-nav b{font-size:15px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+.filters select,.filters input{flex:1;min-width:140px}
+main{max-width:1300px;margin:auto;padding:0 12px 30px}
+.grid{display:grid;grid-template-columns:1.2fr 2fr;gap:14px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.addr{display:none}}
+.card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.card h3{margin:0 0 10px}
+.pill{display:inline-block;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:800}
+.ele{background:#dbeafe;color:#1e40af}.idr{background:#dcfce7;color:#166534}.age-ele{background:#fef9c3;color:#854d0e}.age-idr{background:#ffe4e6;color:#9f1239}
+.emp{display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid #eef2f7;border-radius:12px;margin-bottom:8px}
+.emp b{font-size:14px}.emp small{color:#666}
+.day{border:1px solid #e5eaf1;border-radius:14px;margin-bottom:10px;overflow:hidden}
+.day-head{display:flex;justify-content:space-between;padding:10px 12px;background:#f8fafc;font-weight:800}
+.day-head.today{background:#ffcc00}
+.turn{padding:10px 12px;border-top:1px solid #eee;display:flex;justify-content:space-between;gap:10px}
+.turn b{font-size:14px}.turn small{color:#555;line-height:1.5;display:block}
+.actions{display:flex;gap:6px;flex-shrink:0}
+.actions button{padding:6px 9px;font-size:12px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:99}
+.modal.open{display:flex}
+.sheet{background:#fff;width:100%;max-width:600px;border-radius:20px 20px 0 0;padding:18px;max-height:92vh;overflow:auto}
+.sheet label{font-size:12px;font-weight:700;display:block;margin-top:10px}
+.sheet input,.sheet select,.sheet textarea{width:100%;margin-top:4px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.legend{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;margin:8px 0}
+.stat{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.stat div{background:#fff;padding:10px 14px;border-radius:12px;font-weight:800}
+.stat span{font-weight:400;color:#666;font-size:12px;display:block}
+</style>
+</head>
+<body>
+<header><div class="top"><div class="logo"><div class="logo-badge">GTE<span>SA</span></div><div><h1>GTE SA</h1><p>Tabella di Marcia - Gestione Cantieri</p></div></div><div class="addr"><b>Via Santa Margherita, 33<br>6855 Stabio - Svizzera</b><br>Gestione Elettricisti • Idraulici • Esterni</div></div></header>
+
+<div class="controls">
+<div class="week-nav"><button onclick="changeWeek(-1)">◀</button><b id="weekLabel"></b><button onclick="changeWeek(1)">▶</button><button class="ghost" onclick="goToday()">Oggi</button></div>
+<div class="filters"><select id="filterCat" onchange="render()"><option value="">Tutte le categorie</option><option value="Elettricisti GTE">Elettricisti GTE</option><option value="Idraulici GTE">Idraulici GTE</option><option value="Esterni Agenzia - Elettricisti">Esterni Agenzia - Elettricisti</option><option value="Esterni Agenzia - Idraulici">Esterni Agenzia - Idraulici</option></select><input id="search" placeholder="Cerca nome, commessa, indirizzo..." oninput="render()"></div>
+<button class="yellow" onclick="openTurn()">+ Nuovo Turno</button><button onclick="openEmp()">+ Dipendente</button><button class="ghost" onclick="window.print()">🖨 Stampa</button>
+</div>
+
+<main>
+<div class="stat"><div><span>Dipendenti</span><span id="statEmp">0</span></div><div><span>Turni questa settimana</span><span id="statTurni">0</span></div><div><span>Mezzi in uso</span><span id="statMezzi">0</span></div><div><span>Settimana</span><span id="statWeek"></span></div></div>
+<div class="legend"><span class="pill ele">Elettricisti GTE</span><span class="pill idr">Idraulici GTE</span><span class="pill age-ele">Esterni Agenzia Elettricisti</span><span class="pill age-idr">Esterni Agenzia Idraulici</span></div>
+<div class="grid">
+<div class="card"><h3>👷 Dipendenti / Squadre</h3><div id="empList"></div><hr><h3>🚐 Mezzi di lavoro</h3><div id="mezziList"></div><div style="display:flex;gap:8px;margin-top:10px"><input id="newMezzo" placeholder="Es. Furgone 12 - VS 123456"><button onclick="addMezzo()">+ Mezzo</button></div></div>
+<div class="card"><h3>📅 Vista Settimanale <small id="weekRange"></small></h3><div style="display:flex;gap:8px;margin-bottom:10px"><button class="ghost" onclick="setView('week')">Settimana</button><button class="ghost" onclick="setView('day')">Solo Oggi</button></div><div id="weekView"></div></div>
+</div>
+</main>
+
+<div class="modal" id="modalTurn"><div class="sheet"><h3 id="turnTitle">Nuovo Turno</h3><input type="hidden" id="tId"><label>Dipendente</label><select id="tEmp"></select><label>Giorno</label><input type="date" id="tDate"><div class="row"><div><label>Ora Inizio</label><input type="time" id="tStart" value="07:30"></div><div><label>Ora Fine</label><input type="time" id="tEnd" value="17:00"></div></div><label>Commessa / Lavoro</label><input id="tCommessa" placeholder="Es. C-2026-014 - Ristrutturazione Villa Rossi"><label>Indirizzo di lavoro</label><input id="tIndirizzo" placeholder="Es. Via Roma 12, Mendrisio"><label>Mezzo + Numero</label><select id="tMezzo"></select><label>Note</label><textarea id="tNote" rows="2" placeholder="Materiale, appuntamento, ecc."></textarea><div style="display:flex;gap:8px;margin-top:14px"><button style="flex:1" onclick="saveTurn()">Salva Turno</button><button class="ghost" onclick="closeModals()">Annulla</button></div></div></div>
+<div class="modal" id="modalEmp"><div class="sheet"><h3>Nuovo Dipendente</h3><label>Nome e Cognome</label><input id="eNome" placeholder="Es. Mario Rossi"><label>Categoria</label><select id="eCat"><option>Elettricisti GTE</option><option>Idraulici GTE</option><option>Esterni Agenzia - Elettricisti</option><option>Esterni Agenzia - Idraulici</option></select><label>Telefono / Note</label><input id="eTel" placeholder="Es. +41 79 ..."><div style="display:flex;gap:8px;margin-top:14px"><button style="flex:1" onclick="saveEmp()">Salva</button><button class="ghost" onclick="closeModals()">Annulla</button></div></div></div>
+
+<script>
+let state = JSON.parse(localStorage.getItem('gte_v1')||'null') || {
+emps:[{id:1,nome:'Marco Bianchi',cat:'Elettricisti GTE',tel:''},{id:2,nome:'Luca Verdi',cat:'Idraulici GTE',tel:''},{id:3,nome:'Andrea Neri',cat:'Esterni Agenzia - Elettricisti',tel:'Agenzia'}],
+mezzi:['Furgone 01 - TI 123456','Furgone 02 - TI 234567','Auto 03 - TI 345678'],
+turns:[]
+};
+let current = new Date(); current.setHours(0,0,0,0);
+let view='week';
+function save(){localStorage.setItem('gte_v1',JSON.stringify(state))}
+function monday(d){let x=new Date(d);let day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);return x}
+function fmt(d){return d.toLocaleDateString('it-CH',{weekday:'short',day:'2-digit',month:'2-digit'})}
+function iso(d){return d.toISOString().slice(0,10)}
+function changeWeek(n){current.setDate(current.getDate()+n*7);render()}
+function goToday(){current=new Date();render()}
+function setView(v){view=v;render()}
+function pill(cat){return cat==='Elettricisti GTE'?'ele':cat==='Idraulici GTE'?'idr':cat.includes('Elettricisti')?'age-ele':'age-idr'}
+function render(){
+let mon=monday(current);let sun=new Date(mon);sun.setDate(sun.getDate()+6);
+document.getElementById('weekLabel').textContent='Settimana '+mon.toLocaleDateString('it-CH',{day:'2-digit',month:'2-digit'})+' - '+sun.toLocaleDateString('it-CH',{day:'2-digit',month:'2-digit',year:'numeric'});
+document.getElementById('weekRange').textContent=mon.toLocaleDateString('it-CH')+' / '+sun.toLocaleDateString('it-CH');
+document.getElementById('statWeek').textContent=mon.toLocaleDateString('it-CH');
+let q=(document.getElementById('search').value||'').toLowerCase();let cat=document.getElementById('filterCat').value;
+let emps=state.emps.filter(e=>(!cat||e.cat===cat)&&(!q||e.nome.toLowerCase().includes(q)));
+document.getElementById('empList').innerHTML=emps.map(e=>`<div class="emp"><div><b>${e.nome}</b><br><span class="pill ${pill(e.cat)}">${e.cat}</span> <small>${e.tel||''}</small></div><div class="actions"><button onclick="quickTurn(${e.id})">+ Turno</button><button class="ghost" onclick="delEmp(${e.id})">✕</button></div></div>`).join('')||'<p>Nessun dipendente. Aggiungine uno.</p>';
+document.getElementById('mezziList').innerHTML=state.mezzi.map((m,i)=>`<div class="emp"><b>🚐 ${m}</b><button class="ghost" onclick="delMezzo(${i})">✕</button></div>`).join('');
+document.getElementById('statEmp').textContent=state.emps.length;
+let days=[];for(let i=0;i<7;i++){let d=new Date(mon);d.setDate(d.getDate()+i);days.push(d)}
+if(view==='day'){days=[new Date()];days[0].setHours(0,0,0,0)}
+let html='';let count=0;
+days.forEach(d=>{
+let isToday=iso(d)===iso(new Date());
+let turns=state.turns.filter(t=>t.date===iso(d)).filter(t=>{
+let e=state.emps.find(x=>x.id==t.emp);if(!e) return false;if(cat&&e.cat!==cat) return false;if(q&&!(e.nome.toLowerCase().includes(q)||(t.commessa||'').toLowerCase().includes(q)||(t.indirizzo||'').toLowerCase().includes(q))) return false;return true;
+});
+count+=turns.length;
+html+=`<div class="day"><div class="day-head ${isToday?'today':''}"><span>${fmt(d)} ${isToday?'• OGGI':''}</span><button class="ghost" style="padding:4px 8px" onclick="openTurn('${iso(d)}')">+ Aggiungi</button></div>${turns.map(t=>{let e=state.emps.find(x=>x.id==t.emp)||{nome:'?',cat:''};return `<div class="turn"><div><b>${e.nome}</b> <span class="pill ${pill(e.cat)}">${e.cat}</span><small>🕐 ${t.start} - ${t.end} • 🚐 ${t.mezzo||'-'}</small><small>📋 <b>${t.commessa||'-'}</b></small><small>📍 ${t.indirizzo||'-'}</small><small>${t.note||''}</small></div><div class="actions"><button onclick="editTurn(${t.id})">✏️</button><button class="ghost" onclick="delTurn(${t.id})">🗑</button></div></div>`}).join('')||'<div style="padding:12px;color:#888;font-size:13px">Nessun turno - Libero</div>'}</div>`
+});
+document.getElementById('weekView').innerHTML=html;
+document.getElementById('statTurni').textContent=count;
+document.getElementById('statMezzi').textContent=state.mezzi.length;
+}
+function openTurn(date){document.getElementById('modalTurn').classList.add('open');document.getElementById('tId').value='';document.getElementById('turnTitle').textContent='Nuovo Turno';document.getElementById('tDate').value=date||iso(new Date());fillSelects()}
+function fillSelects(){document.getElementById('tEmp').innerHTML=state.emps.map(e=>`<option value="${e.id}">${e.nome} - ${e.cat}</option>`).join('');document.getElementById('tMezzo').innerHTML=state.mezzi.map(m=>`<option>${m}</option>`).join('')+'<option>Mezzo personale</option><option>Nessun mezzo</option>'}
+function quickTurn(id){openTurn(iso(new Date()));document.getElementById('tEmp').value=id}
+function editTurn(id){let t=state.turns.find(x=>x.id===id);openTurn(t.date);document.getElementById('tId').value=t.id;document.getElementById('turnTitle').textContent='Modifica Turno';document.getElementById('tEmp').value=t.emp;document.getElementById('tStart').value=t.start;document.getElementById('tEnd').value=t.end;document.getElementById('tCommessa').value=t.commessa;document.getElementById('tIndirizzo').value=t.indirizzo;document.getElementById('tMezzo').value=t.mezzo;document.getElementById('tNote').value=t.note}
+function saveTurn(){let id=document.getElementById('tId').value;let obj={id:id?Number(id):Date.now(),emp:Number(document.getElementById('tEmp').value),date:document.getElementById('tDate').value,start:document.getElementById('tStart').value,end:document.getElementById('tEnd').value,commessa:document.getElementById('tCommessa').value,indirizzo:document.getElementById('tIndirizzo').value,mezzo:document.getElementById('tMezzo').value,note:document.getElementById('tNote').value};if(id){state.turns=state.turns.map(t=>t.id==id?obj:t)}else state.turns.push(obj);save();closeModals();render()}
+function delTurn(id){if(confirm('Eliminare questo turno?')){state.turns=state.turns.filter(t=>t.id!==id);save();render()}}
+function openEmp(){document.getElementById('modalEmp').classList.add('open')}
+function saveEmp(){let n=document.getElementById('eNome').value.trim();if(!n) return alert('Inserisci nome');state.emps.push({id:Date.now(),nome:n,cat:document.getElementById('eCat').value,tel:document.getElementById('eTel').value});save();closeModals();render();document.getElementById('eNome').value=''}
+function delEmp(id){if(confirm('Eliminare dipendente e i suoi turni?')){state.emps=state.emps.filter(e=>e.id!==id);state.turns=state.turns.filter(t=>t.emp!==id);save();render()}}
+function addMezzo(){let v=document.getElementById('newMezzo').value.trim();if(!v) return;state.mezzi.push(v);save();render();document.getElementById('newMezzo').value=''}
+function delMezzo(i){state.mezzi.splice(i,1);save();render()}
+function closeModals(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('open'))}
+render();
+</script>
+</body>
+</html>
